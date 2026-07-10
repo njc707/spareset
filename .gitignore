@@ -1,0 +1,30 @@
+# ---- Connect IQ build output ----
+bin/
+gen/
+*.prg
+*.prg.debug.xml
+*.iq
+*.barrel
+*-settings.json
+
+# ---- Developer keys: NEVER commit ----
+*.der
+*.key
+developer_key*
+
+# ---- IDE / editor ----
+.vscode/
+.idea/
+*.iml
+
+# ---- macOS ----
+.DS_Store
+
+# ---- Python analysis tooling ----
+__pycache__/
+*.pyc
+
+# ---- Raw captures / decoded data (delete these lines if you want sample data in-repo) ----
+*.fit
+*_25hz.csv
+*_poll.csv
