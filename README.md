@@ -19,10 +19,21 @@ useful (see [The hardware, as measured](#the-hardware-as-measured)).
 
 Runs entirely on the watch. No phone required, no accounts, no backend.
 
+<p align="center">
+  <img src="media/counting.png" width="230" alt="Live counting: real accelerometer trace, rep count in the sub-screen">
+  <img src="media/review.png" width="230" alt="Review screen: whole-set waveform silhouette before saving">
+  <img src="media/progress-chart.png" width="230" alt="Daily progress: burn-up chart toward the daily goal">
+</p>
+<p align="center"><i>Live rep trace · set review waveform · daily burn-up chart.
+Simulator renders of the shipping code — the trace and waveform are a replayed
+real 10-rep capture fed through the production sensor path; the chart is a real
+training day (84 reps across 5 sets).</i></p>
+
 ## What's in this repository
 
 | Path | Contents |
 |---|---|
+| [`CHANGELOG.md`](CHANGELOG.md) | Versioned release history of the watch app |
 | [`docs/pushup-app-reference.md`](docs/pushup-app-reference.md) | As-built reference: detector spec, measured signal facts, evidence ledger (including what *didn't* work), screens, persistence, tuned constants |
 | [`docs/phase1_5-companion-plan.md`](docs/phase1_5-companion-plan.md) | Architecture plan for FIT data emission and a local-first phone companion |
 | [`docs/phase2-capture-plan.md`](docs/phase2-capture-plan.md) | Capture-first plan for extending to sit-ups and squats, with pre-registered signal risks |
@@ -78,6 +89,13 @@ Design bias: **never miss a real rep.** An occasional false positive —
 correctable in two button presses at the review screen — is the accepted
 lesser evil.
 
+<p align="center">
+  <img src="media/hold.png" width="230" alt="Calibration countdown: HOLD STILL cue in the two-zone ring">
+  <img src="media/saved.png" width="230" alt="Saved splash with the fresh daily total">
+</p>
+<p align="center"><i>Per-set baseline calibration (left) and the save
+confirmation with the fresh daily total (right).</i></p>
+
 ## The hardware, as measured
 
 Established with the QC capture app in this repo, which writes raw
@@ -109,6 +127,8 @@ The complete evidence ledger, with the numbers, is in
 [`docs/pushup-app-reference.md`](docs/pushup-app-reference.md).
 
 ## Roadmap
+
+Current shipping version: **1.0.2** — see [CHANGELOG.md](CHANGELOG.md).
 
 - **v1 store release** (Connect IQ Store) — in submission prep; source lands
   here when it ships

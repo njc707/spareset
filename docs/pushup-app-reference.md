@@ -91,8 +91,10 @@ two-column hint grammar ("GPS  save", "SET  discard", "GPS  begin", "GPS  retry"
 - **IDLE, post-first-set (progress):** headline total in FONT_NUMBER_MILD + small
   "/goal" top-left (width-guarded vs sub-screen; drops to TINY if needed); burn-up
   chart: X spans [first-set-time − 4 % margin (≥10 min) → midnight], clock-locked
-  3 h ticks, noon tick taller with tiny "12" label, dashed 100 % line, step line
-  with endpoint dot, Y ceiling steps 115→150→200→300→next-hundred; drawn in TWO
+  3 h ticks labeled in 12-hour am/pm (noon tick taller; **midnight tick unlabeled**
+  since v1.0.2 — the right edge is always midnight by construction, and the
+  inward-justified label collided with 9p on early-start days), dashed 100 % line,
+  step line with endpoint dot at the wall clock, Y ceiling steps 115→150→200→300→next-hundred; drawn in TWO
   clipped passes so nothing paints under the sub-screen; sub ring shows uncapped %.
 - **COUNTDOWN:** two-zone ring offset down-left (`COUNTDOWN_OFFSET −14,+16`;
   radius auto-fit from getSubscreen, cap 70): dotted positioning zone, thick solid
@@ -107,7 +109,9 @@ two-column hint grammar ("GPS  save", "SET  discard", "GPS  begin", "GPS  retry"
   goal-cross (with celebration buzz, once, live, re-fire-guarded).
 - **REVIEW (inverted):** "SAVE SET?" top-left; whole-set waveform = min/max
   envelope captured during counting, decimated on the fly to ≤160 columns
-  (adjacent-pair merge, decimation doubles when full), drawn as filled bars, same
+  (adjacent-pair merge, decimation doubles when full), rendered since v1.0.2 as a
+  **fill-from-baseline area silhouette** (solid from the axis to each column's
+  max — the per-column min/max thickness was not legible at this width), same
   body orientation; count in sub-screen; hints bottom.
 - **CONFIRM (inverted):** "DISCARD?", count centered, "GPS  keep / SET  discard"
   (GPS is always the safe/keep action).
@@ -138,9 +142,39 @@ JITTER_LIMIT 150. UI: COUNTDOWN_RING_R 70, COUNTDOWN_OFFSET_X −14 / Y 16,
 SAVE_SPLASH_MS 900, CD_ANIM_MS 50, SUB_RING_INSET 3 / THICK 4 / DOT_THICK 2 /
 DASH 14° / GAP 16°, WAVE_MAX 160, TRACE_LEN 160, TRACE_MIN_RANGE 300, TRACE_PEN 3.
 
-## 8. Status
+## 8. Status & version
 
-**LOCKED.** Final on-device QC passed; Phase 1 is complete. This document is the
-authoritative record of the shipped configuration. Changes to the push-up app from
-here forward belong to Phase 1.5 (data emission — additive, detector untouched) or
-Phase 3 (trio integration).
+**LOCKED** detector; current app version **1.0.2** (chart midnight-label fix +
+review waveform fill — see `CHANGELOG.md`; detector, UX flow, and persistence
+schema untouched). Final on-device QC passed at 1.0.0; the 1.0.2 visual changes
+still require a counting-accuracy regression pass on hardware before store
+submission.
+
+**1.5a status (ground truth as of 2026-07-11):** the data-emission layer (FIT
+activity, per-rep timestamps, Storage v1.5) is **designed but NOT in the build
+tree** — it existed only as a delivered artifact that was never landed in
+`source/`. Treat it as a future milestone per `phase1_5-companion-plan.md`, not
+as shipped code. Any file claiming to contain it must say so in its version
+header (see §9).
+
+This document is the authoritative record of the shipped configuration. Changes
+from here forward belong to Phase 1.5 (data emission — additive, detector
+untouched) or Phase 3 (trio integration).
+
+## 9. Versioning & file hygiene
+
+Adopted 2026-07-11, after a three-way mixup of identically named source files.
+
+1. **In-file version header.** Line 2 of `PushupView.mc` carries
+   `App version X.Y.Z | phase + detector status`; below it, a newest-first
+   changelog, the Storage schema in effect, and an explicit note of what is
+   NOT in the file (e.g. "1.5a emission NOT present"). A file must be
+   identifiable in five seconds from its header alone.
+2. **Manifest lockstep.** The manifest/store version is bumped to match the
+   file header on every ship.
+3. **Git tag per shipped version.** `git tag -a vX.Y.Z` in the private repo at
+   each ship; recovery is `git show vX.Y.Z:source/PushupView.mc`, never a hunt
+   through Downloads.
+4. **The build tree is the only truth.** Delivered artifacts get moved into
+   `~/garmin-dev/pushup/source/` and committed, or they don't exist. No editing
+   outside the repo.
