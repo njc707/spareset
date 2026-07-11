@@ -10,6 +10,11 @@ the datasheet says.
 > as-built design reference, the measurement methodology and its findings, and
 > the QC capture tooling (Monkey C + Python) used to characterize the hardware.
 
+<img width="2291" height="3038" alt="image" src="https://github.com/user-attachments/assets/e3842de5-194c-4165-b341-cb934df78257" />
+<img width="1146" height="1524" alt="review" src="https://github.com/user-attachments/assets/384e0cc7-2ca3-40c1-930c-4e8f6dea9469" />
+<img width="1149" height="1518" alt="progress-chart" src="https://github.com/user-attachments/assets/7aecf1ed-55ee-4df3-a4ac-104f4b54830e" />
+
+
 Every algorithm decision in this app was arbitrated by real accelerometer
 captures — pulled off the watch as FIT files via a dedicated QC capture app
 and analyzed offline. The result is a detector that hit **10/10 accuracy
@@ -74,7 +79,8 @@ The project runs on a strict empiricism-over-assumption doctrine:
 
 1. **Fresh calibration every set.** A 5-second countdown measures a baseline
    over its final 3 seconds while the user holds the top position; a jitter
-   guard aborts if they weren't still.
+   guard aborts if they weren't still.<img width="1146" height="1524" alt="hold" src="https://github.com/user-attachments/assets/2bae96a7-f7b8-4062-9cdb-cd4345392172" />
+
 2. **EMA smoothing** (α = 0.5) on the Y axis only — captures showed X and Z
    carry no usable push-up signal on the left wrist.
 3. **Amplitude-from-trailing-minimum detection.** The detector arms, tracks
