@@ -138,7 +138,8 @@ off-axis energy, per-axis jerk against the set envelope, a 3D fingerprint
 z-score, and leave-one-out per-set outlier detection. **All four failed the
 false-flag test**: legitimate reps scored as outliers as often as reaches. A
 flag that cries wolf trains the user to ignore it, so the feature was killed and
-the result written up instead.
+the result written up instead — full analysis in
+[`docs/reach-anomaly-negative-result.md`](docs/reach-anomaly-negative-result.md).
 
 ---
 
@@ -167,6 +168,7 @@ architecturally blocked on this hardware and would require a phone relay.
 | [`docs/instinct2-display-constraints.md`](docs/instinct2-display-constraints.md) | Measured display map: sub-screen geometry, bezel occlusion, safe drawing zones, rendering-API limits |
 | [`docs/storage-schema-reference.md`](docs/storage-schema-reference.md) | Versioned on-watch storage record format, shared across exercises |
 | [`docs/phase1_5-companion-plan.md`](docs/phase1_5-companion-plan.md) | Architecture plan for FIT data emission and a local-first phone companion |
+| [`docs/reach-anomaly-negative-result.md`](docs/reach-anomaly-negative-result.md) | Full write-up of the terminal-reach anomaly investigation: four discrimination methods, why each failed, and the conditions under which it could be reopened |
 | [`qc-app/QcView.mc`](qc-app/QcView.mc) | QC capture app (Monkey C): accelerometer logging into FIT developer fields with a hands-free, vibration-cued protocol |
 | [`tools/fit_qc_extract.py`](tools/fit_qc_extract.py) | FIT decoder for QC captures, with completeness proofs, per-phase diagnostics, and poll-freshness measurement |
 | [`tools/fit_accel_to_csv.py`](tools/fit_accel_to_csv.py) | Earlier-generation decoder for raw FIT accelerometer streams |
