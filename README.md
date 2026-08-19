@@ -52,7 +52,7 @@ triggers a celebration. Button-only, monochrome, battery-conscious.
 | | | |
 | :---: | :---: | :---: |
 | <img src="media/setgoal.png" width="180"><br>**Daily goal** | <img src="media/holdstill.png" width="180"><br>**Stillness calibration** | <img src="media/reps.png" width="180"><br>**Live counting** |
-| <img src="media/savereps.png" width="180"><br>**Set review + save** | <img src="media/squatgoal.png" width="180"><br>**Squat goal reached** | <img src="media/crunchgoal.png" width="180"><br>**Crunch goal reached** |
+| <img src="media/savereps.png" width="180"><br>**Set review + save** | <img src="media/squatgoal.png" width="180"><br>**Squat goal progress** | <img src="media/crunchgoal.png" width="180"><br>**Crunch goal reached** |
 
 Every layout above is anchored to measured pixel boundaries rather than
 estimates — see the display constraint map below.
