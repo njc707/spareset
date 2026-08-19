@@ -1,171 +1,203 @@
-# Bodyweight Exercise Rep Counter — Garmin Instinct 2
+# SpareSet — Bodyweight Rep Counter for Garmin Instinct 2
 
-*Working name — final branding in progress.*
+Counts push-ups, squats, and crunches from the wrist accelerometer alone.
+Fully on-device: no phone, no backend, no cloud. Built solo in Monkey C on
+Connect IQ SDK 9.2.0 for the Garmin Instinct 2 (base model).
 
-An on-device rep counter for the Garmin Instinct 2 that counts **push-ups,
-squats, and crunches** from the wrist alone — built by measuring what the
-hardware actually does instead of trusting what the datasheet says.
-
-> **Status:** the watch app is feature-complete and validated on-device; the
-> application source will be published here when v1 ships on the Connect IQ
-> Store. In the meantime this repository is the full engineering record — the
-> as-built design references, the measurement methodology and its findings, and
-> the QC capture tooling (Monkey C + Python) used to characterize the hardware.
-
-Three exercises, one counting core. Each detector was tuned and validated on the
-watch against real accelerometer captures with known ground truth — never from
-intuition, never from the simulator (whose accelerometer is static). The push-up
-detector hit **10/10 across normal, slow, and fast rep styles** in on-device
-validation; the squat and crunch detectors were derived and locked by the same
-measure-first method.
-
-Runs entirely on the watch. No phone required, no accounts, no backend.
+**Status: feature-complete, in daily dogfooding, working toward Connect IQ Store
+submission.** Not yet published to the store.
 
 <p align="center">
-  <img src="media/squatgoal.png" width="240" alt="Squat progress: fill-to-goal bar, reps-to-go in the sub-screen, daily burn-up chart">
+  <img src="media/reps.png" alt="Live rep counting with burn-up progress chart" width="200">
+  <img src="media/pushupgoal.png" alt="Goal reached celebration" width="200">
 </p>
-<p align="center"><i>Daily progress for one exercise: a fill-to-goal bar on the
-chart's 100% line, live reps-to-go in the round sub-screen, and a burn-up chart
-from the first set to midnight. Simulator renders of the shipping code, populated
-from real training data.</i></p>
 
-## Three exercises, per-exercise goals
+---
 
-Each exercise has its own daily goal, its own history, and its own progress
-view; a page-per-exercise carousel switches between them. The same at-a-glance
-layout — goal bar, reps-to-go, burn-up chart — is shared across all three, laid
-out within measured safe-draw bounds around the round sub-screen.
+## What this repository is
 
-<p align="center">
-  <img src="media/pushupgoal.png" width="240" alt="Push-up progress screen with goal bar and burn-up chart">
-  <img src="media/crunchgoal.png" width="240" alt="Crunch progress screen, goal exceeded, celebration star in the sub-screen">
-  <img src="media/setgoal.png" width="240" alt="Goal-edit screen: set the daily target">
-</p>
-<p align="center"><i>Push-up progress · crunch with the daily goal exceeded
-(celebration marker in the sub-screen) · setting a daily goal.</i></p>
+A **methodology and results showcase**, not a source drop.
 
-## How it counts
+The counting algorithm and its tuned constants are deliberately withheld until
+the app is approved on the Connect IQ Store. What is public is the part that is
+actually interesting to read: how the hardware was characterized, what the
+measurements said, which features those measurements killed, and how the UI was
+fitted to a display whose geometry had to be mapped by hand. The measurement
+tooling — the FIT capture app and the Python decoders — is public in full.
 
-The counting method is shared across all three exercises — only the per-exercise
-thresholds and the calibration posture differ.
+| Public | Withheld |
+| --- | --- |
+| Hardware characterization + measured constants | Detector source (the counting code) |
+| QC capture app source (`qc-app/`) | Tuned detector thresholds |
+| Python analysis tooling (`tools/`) | Signing keys, shipping app-ids |
+| Display constraint map, storage schema | — |
+| Negative results and their evidence | — |
 
-1. **Fresh calibration every set.** A 5-second countdown measures a baseline
-   over its final 3 seconds while you hold the start position; a jitter guard
-   aborts if you weren't still.
-2. **EMA smoothing** on the primary axis — captures showed the off-axes carry no
-   usable signal for these movements on the left wrist.
-3. **Amplitude-from-trailing-extreme detection.** The detector arms, tracks the
-   running minimum, and counts a rep when the smoothed signal rises a tuned
-   amount above that trailing trough; it re-arms after falling from the running
-   peak. A refractory window suppresses double-counts.
-4. **Nothing is compared against absolute levels.** Baselines drift between
-   sessions, and in-set rest settles away from the calibration posture — both
-   measured facts. Everything is relative to trailing extremes.
+---
 
-Design bias: **never miss a real rep.** An occasional false positive —
-correctable in two button presses at the review screen — is the accepted lesser
-evil.
+## The product
 
-<p align="center">
-  <img src="media/holdstill.png" width="240" alt="Calibration countdown with a HOLD STILL cue">
-  <img src="media/reps.png" width="240" alt="Live counting: real accelerometer trace advancing as reps are counted">
-  <img src="media/savereps.png" width="240" alt="Review screen: full-set waveform envelope before saving">
-</p>
-<p align="center"><i>Per-set baseline calibration · live rep trace (real
-accelerometer data, advancing in real sensor batches — no interpolated
-animation) · full-set review waveform before saving.</i></p>
+Two SKUs sharing one detector family:
 
-## What's in this repository
+- **Free** — push-ups only.
+- **Paid** — push-ups, squats, and crunches.
+
+A session runs entirely on the watch: pick an exercise, hold still briefly for
+calibration, then reps count live against a daily goal. Sets are saved to
+on-watch storage, totals roll over at local midnight, and hitting the goal
+triggers a celebration. Button-only, monochrome, battery-conscious.
+
+### Interface
+
+| | | |
+| :---: | :---: | :---: |
+| <img src="media/setgoal.png" width="180"><br>**Daily goal** | <img src="media/holdstill.png" width="180"><br>**Stillness calibration** | <img src="media/reps.png" width="180"><br>**Live counting** |
+| <img src="media/savereps.png" width="180"><br>**Set review + save** | <img src="media/squatgoal.png" width="180"><br>**Squat goal reached** | <img src="media/crunchgoal.png" width="180"><br>**Crunch goal reached** |
+
+Every layout above is anchored to measured pixel boundaries rather than
+estimates — see the display constraint map below.
+
+---
+
+## Hardware findings (measured, not from the datasheet)
+
+Every number below came from instrumenting the device. Several contradict the
+published specification, and each one changed a product decision.
+
+| Finding | Measured value | Consequence |
+| --- | --- | --- |
+| Accelerometer sample rate | ~13.2 Hz real (~76 ms/sample) despite a 25 Hz request | All timing constants re-derived against wall time |
+| Sample delivery | 25-sample batches every ~1.9 s | No sub-batch latency is achievable, period |
+| `Sensor.getInfo()` refresh | ~0.2 Hz, stale | No low-latency sensor path exists |
+| App RAM ceiling | ~91.8 kB | Bounded trace buffers and history caps |
+| Sub-screen geometry | x113 y0 w62 h62, centre (144,31), R=31 | Layout anchored to measured pixels |
+| Bezel occlusion | Uniform to sub-radius + 16 px | Safe-area insets derived, not guessed |
+| `Dc.setScale` | Does not exist on this device | Custom 5×7 bitmap font authored instead |
+
+The display map was produced by writing a **purpose-built instrumentation app**
+whose only job was to report the panel's real geometry, rather than trusting
+simulator output — the simulator's anti-aliasing actively misrepresents a 1-bit
+MIP panel. Full results:
+[`docs/instinct2-display-constraints.md`](docs/instinct2-display-constraints.md).
+
+---
+
+## Detection approach
+
+A shared Y-axis rise detector over an EMA-smoothed signal, with per-exercise
+amplitude and re-arm constant pairs and a minimum rep interval. Constants were
+derived from captured data and **locked only after on-device validation** —
+never from the simulator, whose accelerometer is static.
+
+Governing rules, in priority order:
+
+1. **Never miss a real rep.** An occasional false positive is correctable at the
+   review screen; a missed rep is gone.
+2. **Empiricism over assumption.** Characterize with real captures before
+   designing.
+3. **Honest feedback only.** No cue or statistic that isn't backed by real data.
+
+---
+
+## Analysis pipeline
+
+Signal work runs offline against real captures:
+
+1. [`qc-app/QcView.mc`](qc-app/QcView.mc) records an activity and writes **FIT
+   files with FitContributor developer fields** carrying raw per-axis
+   accelerometer data, under a hands-free vibration-cued capture protocol.
+2. [`tools/fit_qc_extract.py`](tools/fit_qc_extract.py) decodes those captures
+   with completeness proofs — sequence-gap detection, per-phase diagnostics, and
+   poll-freshness measurement.
+3. Detector behaviour is replayed and scored against hand-counted ground truth
+   before any constant is considered for locking.
+
+---
+
+## Negative results
+
+Findings that did not ship are recorded here on purpose. They cost real time,
+and the reasoning is the useful part.
+
+**Per-rep haptic feedback — cut.**
+Measured delivery latency of 0–1.9 s, a direct consequence of batch sample
+delivery. A buzz that lands up to two seconds after the rep is feedback that
+lies. Predictive and scheduled alternatives were considered and rejected rather
+than shipping a cue that could fire for a rep that never happened.
+
+**Lunge detection — cut.**
+Calibration measured roughly a 10 mg usable signal window at the wrist. Root
+cause: an upright torso produces no forearm gravity-tilt arc for the sensor to
+read. Replaced in the exercise set by a leaning squat with a sternum grip, which
+measured a 379 mg calibration swing and ~886 mg peak-to-peak.
+
+**End-of-set false-positive filter — cut.**
+A known artifact: the terminal reach toward the stop button can resemble a rep.
+Four independent discrimination methods were tested across 18 captured sets —
+off-axis energy, per-axis jerk against the set envelope, a 3D fingerprint
+z-score, and leave-one-out per-set outlier detection. **All four failed the
+false-flag test**: legitimate reps scored as outliers as often as reaches. A
+flag that cries wolf trains the user to ignore it, so the feature was killed and
+the result written up instead.
+
+---
+
+## Storage schema
+
+On-watch history is versioned from day one, with each version required to read
+every older format. Schema v1 stores a capped rolling array of
+`[epochSeconds, reps]` records plus daily goal state; the multi-exercise revision
+extends records with an exercise identifier and migrates legacy two-field records
+as push-ups. Full spec:
+[`docs/storage-schema-reference.md`](docs/storage-schema-reference.md).
+
+Note the architectural constraint that shapes the roadmap: `Application.Storage`
+is **sandboxed per app-id**. No external application — including a custom watch
+face — can read it. That, plus the Complications API requiring CIQ 4.x on a
+device capped at API 3.4, means any watch-face display of live totals is
+architecturally blocked on this hardware and would require a phone relay.
+
+---
+
+## Repository map
 
 | Path | Contents |
-|---|---|
-| [`CHANGELOG.md`](CHANGELOG.md) | Versioned release history of the watch app |
-| [`docs/storage-schema-reference.md`](docs/storage-schema-reference.md) | Versioned on-watch storage record format, shared across exercises |
+| --- | --- |
+| [`CHANGELOG.md`](CHANGELOG.md) | Development history and milestones |
 | [`docs/instinct2-display-constraints.md`](docs/instinct2-display-constraints.md) | Measured display map: sub-screen geometry, bezel occlusion, safe drawing zones, rendering-API limits |
+| [`docs/storage-schema-reference.md`](docs/storage-schema-reference.md) | Versioned on-watch storage record format, shared across exercises |
 | [`docs/phase1_5-companion-plan.md`](docs/phase1_5-companion-plan.md) | Architecture plan for FIT data emission and a local-first phone companion |
-| [`qc-app/QcView.mc`](qc-app/QcView.mc) | The QC capture app (Monkey C): accelerometer logging into FIT developer fields with a hands-free, vibration-cued protocol |
-| [`tools/fit_qc_extract.py`](tools/fit_qc_extract.py) | FIT decoder for QC captures, with completeness proofs (sequence-gap detection), per-phase diagnostics, and poll-freshness measurement |
+| [`qc-app/QcView.mc`](qc-app/QcView.mc) | QC capture app (Monkey C): accelerometer logging into FIT developer fields with a hands-free, vibration-cued protocol |
+| [`tools/fit_qc_extract.py`](tools/fit_qc_extract.py) | FIT decoder for QC captures, with completeness proofs, per-phase diagnostics, and poll-freshness measurement |
 | [`tools/fit_accel_to_csv.py`](tools/fit_accel_to_csv.py) | Earlier-generation decoder for raw FIT accelerometer streams |
+| `media/` | Screenshots from the running app |
 
-## Methodology
-
-The project runs on a strict empiricism-over-assumption doctrine:
-
-1. **Characterize before designing.** No detector logic is written until the
-   signal is measured from real hardware via QC captures with known ground
-   truth (fixed-duration holds, known rep counts, labeled protocol phases).
-2. **Pre-register the questions.** Uncertain signal questions are written down
-   before capture, so each session is designed to answer something specific.
-3. **Log negative results.** Failed approaches go into an evidence ledger with
-   the data that killed them, so they are never re-argued from intuition.
-4. **Validate on-device.** The simulator's accelerometer is static; no accuracy
-   claim is made without a sideloaded build counting real reps.
-5. **Honest feedback only.** No cue ships unless it responds to real data.
-
-The same doctrine was later turned on the *display itself*: when layout kept
-failing against the watch's octagonal bezel, the fix was a purpose-built
-on-device measurement app rather than another guess (see
-[`docs/instinct2-display-constraints.md`](docs/instinct2-display-constraints.md)).
-
-## The hardware, as measured
-
-Established with the QC capture app in this repo, which writes raw accelerometer
-batches into FIT developer fields for offline analysis:
-
-| What the API accepts | What the hardware does |
-|---|---|
-| `sampleRate: 25` Hz | ~13.2 Hz real (~76 ms/sample) |
-| 1-second listener period | 25-sample batches delivered every ~1.9 s |
-| `Sensor.getInfo()` for instantaneous accel | Refreshes at ~0.2 Hz (6 distinct values across 499 polls at 50 ms) |
-
-Consequence: **real-time per-rep feedback is physically impossible on this
-device.** Any buzz or flash tied to a rep would land 0–1.9 s late. The app
-therefore ships no per-rep cue at all — a scheduled/predictive buzz that merely
-*pretends* to be responsive was rejected on principle.
-
-## The display, as measured
-
-The Instinct 2 pairs a 176×176 monochrome main display with a round sub-screen,
-behind an octagonal bezel that occludes more of the screen than is obvious.
-Several layouts were lost to that occlusion before it was mapped — so it was
-mapped, with an on-device tool that draws numbered rulers and reports the raw
-geometry, read straight off a photo:
-
-- **Sub-screen** resolves to centre (144, 31), radius 31 — flush to the
-  top-right corner, so there is *no* usable screen above or right of it.
-- **Peripheral graphics** are only reliably visible from ~5 to ~10 o'clock; the
-  bezel occludes out to ~16 px past the sub-screen edge, uniformly.
-- **Corner-safe inset** for the octagon is ~16 px; flat horizontal elements at
-  mid-height can sit much closer.
-- **`Dc.setScale` does not exist** on this device/API — sub-minimum text needs a
-  custom bitmap font resource, not a scaled system font.
-
-## What didn't work (kept for the record)
-
-- **Fixed-threshold trough crossing.** Smoothing flattens the raw downstroke
-  spike; any fixed-line approach fails.
-- **End-of-set watch-reach rejection — span-based features.** Reaching for the
-  stop button can trip a rep; the reach's amplitude, cross-axis *swing
-  magnitude*, rise time, and trough depth all overlapped real reps in captured
-  data, so no magnitude threshold separates them. The review screen exists at
-  exactly the only moment such a phantom can occur, so today the app corrects
-  rather than rejects. **Under active investigation:** whether cross-axis
-  *co-movement* and vector-magnitude deviation distinguish a compound reach from
-  a single-axis rep, and a count-neutral "abnormal rep" flag at review. Result
-  will be logged either way.
+---
 
 ## Roadmap
 
-- **v1 store release** (Connect IQ Store) — in submission prep; source lands
-  here when it ships
-- **Data emission:** sets recorded as FIT activities with developer fields
-  (per-rep timestamps, per-set stats) for Garmin Connect presence and offline
-  analysis
-- **Phone companion:** local-first analytics over Connect IQ device messaging —
-  no backend, no accounts — reconciling history per user across the product
+- [x] Push-up detector, on-device validated
+- [x] Squat and crunch detectors, constants locked
+- [x] Multi-exercise UI: burn-up chart, goal bar, custom bitmap font, celebration
+- [x] Display constraint mapping
+- [ ] Data emission layer — FIT activities with developer fields, per-rep timestamps
+- [ ] Counting regression + Connect IQ Store submission
+- [ ] Android companion (Kotlin, Connect IQ Mobile SDK) — local-first history
+- [ ] Paid three-exercise SKU to store
+
+---
+
+## Built with
+
+Monkey C · Connect IQ SDK 9.2.0 · Python (`fitdecode`, Pillow) · FIT protocol ·
+VS Code on macOS
+
+---
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
 
-This project is not affiliated with or endorsed by Garmin Ltd.
+## Author
+
+Nate — [github.com/njc707](https://github.com/njc707)
